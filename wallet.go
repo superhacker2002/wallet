@@ -16,6 +16,10 @@ type Wallet struct {
 	mutex   sync.RWMutex
 }
 
+func NewWallet(amount Bitcoin) *Wallet {
+	return &Wallet{balance: amount}
+}
+
 func (w *Wallet) Deposit(amount Bitcoin) error {
 	if amount <= 0 {
 		return ErrNonPositiveAmount
