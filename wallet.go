@@ -1,20 +1,24 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
 
 type Bitcoin float64
 
+var ErrNonPositiveAmount = errors.New("negative or zero amount")
+var ErrInsufficientBalance = errors.New("insufficient balance")
+
 type Wallet struct {
 	balance Bitcoin
-	mutex   sync.Mutex
+	mutex   sync.RWMutex
 }
 
 func (w *Wallet) Deposit(amount Bitcoin) error {
 	if amount <= 0 {
-		return fmt.Errorf("impossible to deposit negative or zero amount of bitcoins: %f", amount)
+		return ErrNonPositiveAmount
 	}
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
@@ -24,19 +28,19 @@ func (w *Wallet) Deposit(amount Bitcoin) error {
 
 func (w *Wallet) Withdraw(amount Bitcoin) error {
 	if amount <= 0 {
-		return fmt.Errorf("impossible to withdraw negative or zero amount of bitcoins: %f", amount)
+		return ErrNonPositiveAmount
 	}
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 	if w.balance < amount {
-		return fmt.Errorf("insufficient funds on the wallet balance: %f", w.balance)
+		return fmt.Errorf("%w: %f", ErrInsufficientBalance, w.balance)
 	}
 	w.balance -= amount
 	return nil
 }
 
 func (w *Wallet) Balance() Bitcoin {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
 	return w.balance
 }
