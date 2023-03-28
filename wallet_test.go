@@ -2,6 +2,8 @@ package wallet
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWallet_Withdraw(t *testing.T) {
@@ -11,33 +13,58 @@ func TestWallet_Withdraw(t *testing.T) {
 		initAmount Bitcoin
 		amount     Bitcoin
 		expected   Bitcoin
-		wantError  bool
+		wantError  error
 	}{
-		{name: "Withdraw equal amount", initAmount: 100.0, amount: 100.0, expected: 0.0, wantError: false},
-		{name: "Withdraw lower amount", initAmount: 100.0, amount: 10.0, expected: 90.0, wantError: false},
-		{name: "Withdraw zero amount", initAmount: 100.0, amount: 0.0, expected: 100.0, wantError: true},
-		{name: "Withdraw from zero balance", initAmount: 0.0, amount: 100.0, expected: 0.0, wantError: true},
-		{name: "Withdraw negative amount", initAmount: 100.0, amount: -10.0, expected: 100.0, wantError: true},
-		{name: "Withdraw large amount", initAmount: 1e11, amount: 1e10, expected: 1e11 - 1e10, wantError: false},
+		{
+			name:       "Withdraw equal amount",
+			initAmount: 100.0,
+			amount:     100.0,
+			expected:   0.0,
+			wantError:  nil,
+		},
+		{
+			name:       "Withdraw lower amount",
+			initAmount: 100.0,
+			amount:     10.0,
+			expected:   90.0,
+			wantError:  nil,
+		},
+		{
+			name:       "Withdraw zero amount",
+			initAmount: 100.0,
+			amount:     0.0,
+			expected:   100.0,
+			wantError:  ErrNonPositiveAmount,
+		},
+		{
+			name:       "Withdraw from zero balance",
+			initAmount: 0.0,
+			amount:     100.0,
+			expected:   0.0,
+			wantError:  ErrInsufficientBalance,
+		},
+		{
+			name:       "Withdraw negative amount",
+			initAmount: 100.0,
+			amount:     -10.0,
+			expected:   100.0,
+			wantError:  ErrNonPositiveAmount,
+		},
+		{
+			name:       "Withdraw large amount",
+			initAmount: 1e11,
+			amount:     1e10,
+			expected:   1e11 - 1e10,
+			wantError:  nil,
+		},
 	}
 
 	for _, test := range tests {
-		test := test // Capture range variable.
 		t.Run(test.name, func(t *testing.T) {
-			wallet := &Wallet{balance: test.initAmount}
+			wallet := NewWallet(test.initAmount)
 			err := wallet.Withdraw(test.amount)
-			if test.wantError {
-				if err == nil {
-					t.Errorf("An error was expected, but did not occur")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error occured: %v", err)
-				}
-				if wallet.Balance() != test.expected {
-					t.Errorf("Balance is incorrect: expected %f, but got %f", test.expected, wallet.Balance())
-				}
-			}
+			assert.ErrorIs(t, err, test.wantError, "wallet.Withdraw(%v)", test.amount)
+			assert.Equal(t, test.expected, wallet.Balance(), "wallet.Withdraw(%v)", test.amount)
 		})
 	}
 }
