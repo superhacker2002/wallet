@@ -13,12 +13,12 @@ go get "github.com/superhacker2002/wallet"
 ```
 
 Then import module in your program:
-```
+```go
 import "github.com/superhacker2002/wallet"
 ```
 
 And use wallet:
-```
+```go
 package main
 
 import "github.com/superhacker2002/wallet"
@@ -32,6 +32,6 @@ func main() {
 ## Running the tests
 
 Run unit tests using 
-```
+```go
 go test -v
 ```
