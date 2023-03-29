@@ -16,8 +16,8 @@ type Wallet struct {
 	mutex   sync.RWMutex
 }
 
-func NewWallet(amount Bitcoin) *Wallet {
-	return &Wallet{balance: amount}
+func NewWallet(balance Bitcoin) *Wallet {
+	return &Wallet{balance: balance}
 }
 
 func (w *Wallet) Deposit(amount Bitcoin) error {
