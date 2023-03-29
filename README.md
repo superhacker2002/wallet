@@ -8,9 +8,9 @@ Implementation of Wallet type that holds bitcoins and allows the following opera
 
 Firstly, run this command in order to load module and set up dependencies:
 
-```
+````
 go get "github.com/superhacker2002/wallet"
-```
+````
 
 Then import module in your program:
 ```
