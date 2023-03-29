@@ -75,30 +75,40 @@ func TestWallet_Deposit(t *testing.T) {
 		name      string
 		amount    Bitcoin
 		expected  Bitcoin
-		wantError bool
+		wantError error
 	}{
-		{name: "Deposit positive amount", amount: 100.0, expected: 100.0, wantError: false},
-		{name: "Deposit negative amount", amount: -10.0, expected: 0.0, wantError: true},
-		{name: "Deposit zero amount", amount: 0.0, expected: 0.0, wantError: true},
-		{name: "Deposit large amount", amount: 1e10, expected: 1e10, wantError: false},
+		{
+			name:      "Deposit positive amount",
+			amount:    100.0,
+			expected:  100.0,
+			wantError: nil,
+		},
+		{
+			name:      "Deposit negative amount",
+			amount:    -10.0,
+			expected:  0.0,
+			wantError: ErrNonPositiveAmount,
+		},
+		{
+			name:      "Deposit zero amount",
+			amount:    0.0,
+			expected:  0.0,
+			wantError: ErrNonPositiveAmount,
+		},
+		{
+			name:      "Deposit large amount",
+			amount:    1e10,
+			expected:  1e10,
+			wantError: nil,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			wallet := &Wallet{balance: 0.0}
+			wallet := NewWallet(0.0)
 			err := wallet.Deposit(test.amount)
-			if test.wantError {
-				if err == nil {
-					t.Errorf("An error was expected, but did not occur")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error occured: %v", err)
-				}
-				if wallet.Balance() != test.expected {
-					t.Errorf("Balance is incorrect: expected %f, but got %f", test.expected, wallet.Balance())
-				}
-			}
+			assert.ErrorIs(t, err, test.wantError, "wallet.Withdraw(%v)", test.amount)
+			assert.Equal(t, test.expected, wallet.Balance(), "wallet.Withdraw(%v)", test.amount)
 		})
 	}
 
