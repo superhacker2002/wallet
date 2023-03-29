@@ -1,7 +1,11 @@
 package wallet
 
 import (
+	"math/rand"
 	"testing"
+	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -111,5 +115,84 @@ func TestWallet_Deposit(t *testing.T) {
 			assert.Equal(t, test.expected, wallet.Balance(), "wallet.Withdraw(%v)", test.amount)
 		})
 	}
+}
 
+func TestWallet_Balance(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		initAmount Bitcoin
+	}{
+		{
+			name:       "Zero balance",
+			initAmount: 0.0,
+		},
+		{
+			name:       "Positive balance",
+			initAmount: 100.0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			wallet := NewWallet(test.initAmount)
+			assert.Equal(t, test.initAmount, wallet.Balance())
+		})
+	}
+}
+
+func TestWallet_ParallelWithdraw(t *testing.T) {
+	const goroutinesCount = 100
+	wallet := NewWallet(1000.0)
+	g := new(errgroup.Group)
+	for i := 0; i < goroutinesCount; i++ {
+		g.Go(func() error {
+			return wallet.Withdraw(10.0)
+		})
+	}
+	err := g.Wait()
+	assert.NoError(t, err, "one of withdraw returns error")
+	assert.Equal(t, Bitcoin(0.0), wallet.Balance())
+}
+
+func TestWallet_ParallelDeposit(t *testing.T) {
+	const goroutinesCount = 100
+	wallet := NewWallet(0.0)
+	g := new(errgroup.Group)
+	for i := 0; i < goroutinesCount; i++ {
+		g.Go(func() error {
+			return wallet.Deposit(10.0)
+		})
+	}
+	err := g.Wait()
+	assert.NoError(t, err, "one of deposit returns error")
+	assert.Equal(t, Bitcoin(1000.0), wallet.Balance())
+}
+
+func TestWallet_ParallelRandomMethods(t *testing.T) {
+	const goroutinesCount = 100
+	balance := Bitcoin(1000.0)
+	wallet := NewWallet(balance)
+	g := new(errgroup.Group)
+
+	seed := time.Now().UnixNano()
+	rand.Seed(seed)
+	t.Log(seed)
+
+	for i := 0; i < goroutinesCount; i++ {
+		if function := rand.Intn(1); function == 0 {
+			balance += 10.0
+			g.Go(func() error {
+				return wallet.Deposit(10.0)
+			})
+		} else {
+			balance -= 10.0
+			g.Go(func() error {
+				return wallet.Withdraw(10.0)
+			})
+		}
+	}
+	err := g.Wait()
+	assert.NoError(t, err, "one of deposit or withdraw returns error")
+	assert.Equal(t, balance, wallet.Balance())
 }
