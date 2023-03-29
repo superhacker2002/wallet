@@ -111,8 +111,8 @@ func TestWallet_Deposit(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			wallet := NewWallet(0.0)
 			err := wallet.Deposit(test.amount)
-			assert.ErrorIs(t, err, test.wantError, "wallet.Withdraw(%v)", test.amount)
-			assert.Equal(t, test.expected, wallet.Balance(), "wallet.Withdraw(%v)", test.amount)
+			assert.ErrorIs(t, err, test.wantError, "wallet.Deposit(%v)", test.amount)
+			assert.Equal(t, test.expected, wallet.Balance(), "wallet.Deposit(%v)", test.amount)
 		})
 	}
 }
